@@ -62,5 +62,30 @@ function get_url($input_array) {
     return $link;
 }
 
+
+function validate_input($input_params){
+    $expected_input_params = array(
+        'r',
+        'g',
+        'a',
+        'v',
+        'c',
+        'e'
+    );
+    foreach ($expected_input_params as $key => $value) {
+        if (empty($input_params[$key])){
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+if ((empty($input_params)) || (!validate_input($input_params))){
+    echo "Accepted values are:" .  'r = "Repository", g = "Group", a = "Artifact", v = "Version", c = "Classifier" e="Extention"';
+    exit();
+}
+
+
+
 $link = get_url($input_params);
 header("Location: ". $link);
