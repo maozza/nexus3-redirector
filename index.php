@@ -72,8 +72,8 @@ function validate_input($input_params){
         'c',
         'e'
     );
-    foreach ($expected_input_params as $key => $value) {
-        if (empty($input_params[$key])){
+    foreach ($expected_input_params as $value) {
+        if (empty($input_params[$value])){
             return FALSE;
         }
     }
