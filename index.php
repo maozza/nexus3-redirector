@@ -11,7 +11,7 @@ function get_maven_metadata($r = "", $g = "", $a = "", $v = "") {
     } else {        
         $meta_url = "$url/$r/$group/$a/$v/maven-metadata.xml";
     }
-
+    //print_r($meta_url);
     $maven_metadata = file_get_contents($meta_url);
     return $maven_metadata;
 }
@@ -19,7 +19,8 @@ function get_maven_metadata($r = "", $g = "", $a = "", $v = "") {
 function parse_xml($xml_str) {
     $xml = simplexml_load_string($xml_str);
     if ($xml === false) {
-        echo "Failed loading XML: ";
+        header("HTTP/1.1 500 Internal Server Error");
+        die("Failed loading XML: ... ");
         foreach (libxml_get_errors() as $error) {
             echo "<br>", $error->message;
         }
@@ -38,8 +39,14 @@ function is_snapshot($version) {
     return endsWith($version, '-SNAPSHOT');
 }
 
-function get_url($input_array) {
-    extract($input_array);
+function get_url($input_array) {    
+    extract($input_array);    
+    if (!(empty($c))){
+        $c='-' . $c;
+    }
+    if (empty($e)){
+        $e= 'jar';
+    }    
     $group = str_replace('.', '/', $g);
     $maven_metadata = get_maven_metadata($r, $g, $a, NULL);
     $xml_obj = parse_xml($maven_metadata);
@@ -52,12 +59,13 @@ function get_url($input_array) {
     }
     if (is_snapshot($v)) {
         $maven_snapshot_metadata = get_maven_metadata($r, $g, $a, $v);        
-        $xml_obj_snapshot = parse_xml($maven_snapshot_metadata);        
-        $timestamp = $xml_obj->versioning->snapshot->timestamp;
-        $buildNumber = $xml_obj->versioning->snapshot->buildNumber;
-        $link = "$url/$r/$group/$v/$a-$v-$timestamp-$buildNumber-$c.$e";
+        $xml_obj_snapshot = parse_xml($maven_snapshot_metadata);
+        $timestamp = $xml_obj_snapshot->versioning->snapshot->timestamp;
+        $buildNumber = $xml_obj_snapshot->versioning->snapshot->buildNumber;
+        
+        $link = "$url/$r/$group/$a/$v/$a-" . str_replace('-SNAPSHOT','', $v) . "-$timestamp-$buildNumber$c.$e";
     } else {
-        $link = "$url/$r/$group/$a/$v/$a-$v-$c.$e";
+        $link = "$url/$r/$group/$a/$v/$a-$v$c.$e";
     }
     return $link;
 }
@@ -69,8 +77,8 @@ function validate_input($input_params){
         'g',
         'a',
         'v',
-        'c',
-        'e'
+        //'c',
+        //'e'
     );
     foreach ($expected_input_params as $value) {
         if (empty($input_params[$value])){
